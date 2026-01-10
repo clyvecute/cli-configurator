@@ -30,6 +30,24 @@
       linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
     background-size: 40px 40px;
     background-position: center;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* CRT Scanline Overlay */
+  body::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.1) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.6;
   }
 
   #root {
@@ -231,11 +249,43 @@
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
 .cta:hover:not(:disabled) {
   background: #fff;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 15px var(--accent);
+  letter-spacing: 0.1em;
+}
+
+/* Glitch effect on hover */
+.cta:hover::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.8),
+      transparent);
+  animation: glitch-anim 0.5s linear infinite;
+}
+
+@keyframes glitch-anim {
+  0% {
+    left: -100%;
+  }
+
+  50% {
+    left: 100%;
+  }
+
+  100% {
+    left: 100%;
+  }
 }
 
 .cta:disabled {
@@ -244,15 +294,34 @@
   cursor: not-allowed;
 }
 
-/* --- Editor --- */
+/* --- Editor with Line Numbers --- */
 .editor-content {
   padding: 0;
+  display: flex;
+  position: relative;
+  background: var(--bg-root);
+  min-height: 400px;
+}
+
+.line-numbers {
+  padding: 1.5rem 0.5rem 1.5rem 1rem;
+  background: #000;
+  border-right: 1px solid var(--border-dim);
+  color: var(--border-bright);
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: right;
+  user-select: none;
+  opacity: 0.5;
+  min-width: 3.5rem;
 }
 
 .editor textarea {
+  flex: 1;
   width: 100%;
   min-height: 400px;
-  background: var(--bg-root);
+  background: transparent;
   color: var(--text-primary);
   border: none;
   padding: 1.5rem;
@@ -307,10 +376,51 @@
   display: block;
 }
 
-.summary-pill span {
+/* --- Status Bar Visualizer --- */
+.status-bar-container {
+  grid-column: 1 / -1;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.75rem;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.status-label {
   color: var(--text-dim);
   text-transform: uppercase;
-  font-size: 0.7rem;
+  min-width: 80px;
+}
+
+.status-bar {
+  flex: 1;
+  height: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  display: flex;
+  padding: 1px;
+  gap: 1px;
+}
+
+.segment {
+  flex: 1;
+  background: var(--border-dim);
+  transition: background 0.3s;
+}
+
+.segment.active {
+  background: var(--accent);
+  box-shadow: 0 0 5px var(--accent-dim);
+}
+
+.segment.critical {
+  background: var(--error);
+  box-shadow: 0 0 5px var(--error);
+}
+
+.segment.warning {
+  background: var(--warn);
 }
 
 .issue-grid {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import "./styles.css";
 
 type Issue = {
@@ -30,6 +30,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [apiKey, setApiKey] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("cli-linter-api-key");
@@ -82,6 +84,15 @@ function App() {
     return counts;
   }, [issues]);
 
+  const lineCount = useMemo(() => config.split("\n").length, [config]);
+
+  // Sync scrolling between textarea and line numbers
+  const handleScroll = () => {
+    if (textareaRef.current && lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  };
+
   return (
     <div className="app-shell">
       <header className="hero">
@@ -130,10 +141,18 @@ function App() {
             </div>
           </div>
           <div className="editor-content">
+            <div className="line-numbers" ref={lineNumbersRef}>
+              {Array.from({ length: Math.max(lineCount, 15) }, (_, i) => (
+                <div key={i + 1}>{i + 1}</div>
+              ))}
+            </div>
             <textarea
+              ref={textareaRef}
               value={config}
               onChange={(event) => setConfig(event.target.value)}
+              onScroll={handleScroll}
               spellCheck={false}
+              placeholder="# YAML/JSON Config"
             />
           </div>
           {error && <p className="error-message">SYSTEM_ERROR: {error}</p>}
@@ -143,6 +162,27 @@ function App() {
           <div className="panel-header">
             <h2>Analysis Report</h2>
           </div>
+
+          <div className="status-bar-container">
+            <span className="status-label">SYS_STATUS</span>
+            <div className="status-bar">
+              {Array.from({ length: 40 }).map((_, i) => {
+                let statusClass = "";
+                if (summary.error && i < 20) statusClass = "critical";
+                else if (summary.warn && i < 20) statusClass = "warning";
+                else if (issues.length === 0) statusClass = "active";
+
+                // Add some randomness to "active" state or specific patterns
+                if (issues.length === 0 && Math.random() > 0.8) statusClass = "";
+
+                return <div key={i} className={`segment ${statusClass}`} />;
+              })}
+            </div>
+            <span className="status-label" style={{ textAlign: "right" }}>
+              {issues.length === 0 ? "NOMINAL" : "ALERT"}
+            </span>
+          </div>
+
           <div className="summary-row">
             <div className="summary-pill">
               <span>Critical Errors</span>

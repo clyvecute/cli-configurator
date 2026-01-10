@@ -1,76 +1,110 @@
-# CLI Config Linter
+# 🛡️ Sentinel // Config Linter
 
-`cli-config-linter` reads YAML or JSON configuration files, validates a fixed schema, and reports issues with line numbers. It supports a strict mode (treat warnings as errors) and outputs fix suggestions when requested.
+> **Infrastructure assurance suite for the modern stack.**  
+> *Validate, Analyze, and Secure your configuration files with precision.*
 
-## Installation
+![License](https://img.shields.io/badge/license-MIT-cyan?style=flat-square)
+![Go](https://img.shields.io/badge/go-1.22-cyan?style=flat-square)
+![React](https://img.shields.io/badge/react-18-cyan?style=flat-square)
+![Docker](https://img.shields.io/badge/docker-ready-cyan?style=flat-square)
 
-1. Install Go 1.22 or newer: https://go.dev/dl/  
-2. Run `go install ./...` from this repository root.
+**Sentinel** is a dual-interface validation tool designed to catch configuration drift before it hits production. It combines a high-performance **Go CLI** for CI/CD pipelines with a **Cybernetic Dashboard** for visual debugging and reporting.
 
-## Usage
+---
 
-```sh
-cli-config-linter [flags] <config-file>...
+## ✨ Key Features
+
+- **🚀 Dual-Mode Architecture**: Runs as a standalone CLI tool or a containerized Full-Stack Web App.
+- **👁️ Visual Dashboard**: A "Sci-Fi" terminal interface with:
+  - **Syntax Highlighting** (PrismJS) for YAML/JSON.
+  - **Real-time Health Visualizers** & Glitch Effects.
+  - **Quick-Load Presets** (Clean/Broken/Mixed) for rapid testing.
+- **🔧 Smart Validation**: Detects schema violations, type mismatches, and business logic errors.
+- **📄 Reporting**: One-click **JSON Audit Exports** for compliance and ticketing.
+- **🐳 Docker Native**: Builds into a single lightweight binary + static asset container.
+
+---
+
+## 🛠️ Quick Start (Docker)
+
+The fastest way to run Sentinel is via Docker. This spins up the API and the UI instantly.
+
+```bash
+# Build the image
+docker build -t sentinel .
+
+# Run the sentinel system
+# The API key is set via env var (Default used if not provided, but recommended to set one)
+docker run -p 8080:8080 -e CONFIG_LINTER_API_KEY=admin-key-123 sentinel
 ```
 
-### Flags
+OPEN: `http://localhost:8080`  
+KEY: `admin-key-123`
 
-- `-strict` (`bool`): Treat warnings as fatal issues.  
-- `-fix-suggestions` (`bool`): Print optional fix guidance for each issue.
+---
 
-### Sample config
+## 💻 Local Development
 
-```yaml
-metadata:
-  name: sample-app
-  env: prod
-settings:
-  replicas: 3
-  timeout: 45
-features:
-  - name: login
-    enabled: true
+### 1. Backend (Go)
+Runs the API server which handles validation logic.
+
+```bash
+# Run the server
+export CONFIG_LINTER_API_KEY=my-secret-key
+export STATIC_DIR=./frontend/dist # Point to frontend assets
+go run ./server
 ```
 
-### Output
+### 2. Frontend (React + Vite)
+Runs the Cybernetic Dashboard.
 
+```bash
+cd frontend
+npm install
+npm run dev
 ```
-/path/to/config.yaml:
-  /path/to/config.yaml:12 [warn] settings.timeout is missing; defaulting to 30
-    Fix suggestion: Add settings.timeout: 30
+*UI will run at `http://localhost:5173`. Configure it to point to your local Go server.*
+
+---
+
+## 📟 CLI Usage
+
+For integration into **GitHub Actions** or **Pre-commit hooks**, use the CLI mode.
+
+```bash
+# Install
+go install ./...
+
+# Run validation
+cli-config-linter -strict -fix-suggestions config.yaml
 ```
 
-Warnings are always reported. When `-strict` is provided, warnings cause the CLI to exit with a non-zero status. Errors always abort the run regardless of mode.
+**Output Example:**
+```text
+config.yaml:12 [error] settings.replicas must be a positive integer
+  Fix suggestion: Set settings.replicas to at least 1
+```
 
-## Workflow for the full stack
+---
 
-1. **Backend service**
-   ```sh
-   CONFIG_LINTER_API_KEY=key123 go run ./server
-   ```
-   - Starts on `:8080` unless you set `LINTER_SERVER_PORT`.  
-   - `CONFIG_LINTER_API_KEY` may contain comma-separated keys; the server rejects requests without a configured API key.
+## 📐 Configuration Schema
 
-2. **Frontend UI**
-   ```sh
-   cd frontend
-   npm install      # run once, already done
-   npm run dev
-   ```
-   - Open `http://localhost:5173` to reach the React dashboard.
-   - Paste your YAML/JSON or load `sample-config.json` (located at the repo root) directly into the editor.
-   - Enter one of the configured API keys, toggle **Strict**/ **Fix hints**, and click **Lint config**.
+Sentinel validates against this strict schema:
 
-3. **API contract**
-   - `POST /lint` with `{ config, strict, fixSuggestions }`.  
-   - Send API key via `X-API-Key` header or `Authorization: Bearer <key>`.
-   - The response includes `issues`, `strict`, `fatal`, and a timestamp for auditing.
-   - Grab the JSON output for automation: e.g., pipe into GitHub Actions, Slack bots, or VS Code tasks.
+| Section    | Field      | Type    | Requirement |
+|------------|------------|---------|-------------|
+| `metadata` | `name`     | string  | Required    |
+|            | `env`      | enum    | `dev`, `staging`, `prod` |
+| `settings` | `replicas` | int     | > 0         |
+|            | `timeout`  | int     | > 0 (Warn if missing) |
+| `features` | `enabled`  | boolean | Required    |
 
-4. **Bind CLI → API**
-   - The CLI still works standalone: `cli-config-linter -strict sample.yaml`.  
-   - Use it in scripts or pre-commit hooks to gate commits while the UI serves reporting/game day review.
+---
 
-## Testing
+## 📸 Portfolio Notes
 
-Run `go test ./...` after installing Go.
+This project demonstrates:
+- **Full Stack Engineering**: Go (Backend), React/TypeScript (Frontend).
+- **Architecture**: REST API design, Docker Multi-stage builds, Single-Binary deployment.
+- **UI/UX Design**: Custom "Dark Mode" aesthetic, CSS animations, and developer-centric usability.
+- **Tooling**: Custom Linters, AST parsing (conceptual), and CLI design.

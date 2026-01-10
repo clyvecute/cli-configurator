@@ -37,6 +37,19 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/lint", withCORS(withAPIKeyAuth(keys, http.HandlerFunc(lintHandler))))
 
+	// Serve static frontend files
+	staticDir := os.Getenv("STATIC_DIR")
+	if staticDir == "" {
+		staticDir = "./static"
+	}
+	// Check if static dir exists to avoid confusion during dev
+	if info, err := os.Stat(staticDir); err == nil && info.IsDir() {
+		fmt.Printf("Serving static files from %s\n", staticDir)
+		mux.Handle("/", http.FileServer(http.Dir(staticDir)))
+	} else {
+		fmt.Printf("WARNING: static directory %s not found; frontend will not be served\n", staticDir)
+	}
+
 	addr := ":8080"
 	if port := os.Getenv("LINTER_SERVER_PORT"); port != "" {
 		addr = ":" + port

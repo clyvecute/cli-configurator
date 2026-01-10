@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import Editor from "react-simple-code-editor";
+import { highlight, languages } from "prismjs";
+import "prismjs/components/prism-yaml";
+import "prismjs/components/prism-json";
+
 import "./styles.css";
 
 type Issue = {
@@ -8,7 +13,8 @@ type Issue = {
   suggestedFix?: string;
 };
 
-const sampleConfig = `metadata:
+const presets = {
+  clean: `metadata:
   name: core-service-01
   env: staging
 settings:
@@ -18,12 +24,33 @@ features:
   - name: sys-admin-v2
     enabled: true
   - name: legacy-mode
-    enabled: false`;
+    enabled: false`,
+
+  broken: `metadata:
+  name: 
+  env: local-dev # Invalid environment
+settings:
+  replicas: -1 # Must be positive
+  # timeout missing (warning)
+features:
+  - name: 
+    enabled: maybe # Invalid boolean`,
+
+  mixed: `metadata:
+  name: analytics-worker
+  env: prod
+settings:
+  replicas: 2
+  timeout: 0 # Warning: should be positive
+features:
+  - name: beta-opt-in
+    enabled: true`
+};
 
 const API_BASE = import.meta.env.VITE_LINTER_API ?? "http://localhost:8080";
 
 function App() {
-  const [config, setConfig] = useState(sampleConfig);
+  const [config, setConfig] = useState(presets.clean);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [strict, setStrict] = useState(true);
   const [fixSuggestions, setFixSuggestions] = useState(true);
@@ -84,12 +111,32 @@ function App() {
     return counts;
   }, [issues]);
 
+  const downloadReport = () => {
+    const report = {
+      timestamp: new Date().toISOString(),
+      summary,
+      issues,
+      config_snapshot: config
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sentinel-report-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const lineCount = useMemo(() => config.split("\n").length, [config]);
 
   // Sync scrolling between textarea and line numbers
-  const handleScroll = () => {
-    if (textareaRef.current && lineNumbersRef.current) {
-      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement> | React.UIEvent<HTMLDivElement>) => {
+    // The editor component might fire scroll events from different elements, 
+    // but the textarea inside it is what we care about for scrollTop
+    // If it's the custom editor, the target is the textarea.
+    const target = e.target as HTMLElement;
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = target.scrollTop;
     }
   };
 
@@ -119,8 +166,14 @@ function App() {
       <main className="main-grid">
         <section className="panel editor">
           <div className="panel-header">
-            <div>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <h2>Input Source</h2>
+              <div className="preset-actions">
+                <span className="label">LOAD:</span>
+                <button onClick={() => setConfig(presets.clean)} className="preset-btn">CLEAN</button>
+                <button onClick={() => setConfig(presets.broken)} className="preset-btn warning">BROKEN</button>
+                <button onClick={() => setConfig(presets.mixed)} className="preset-btn">MIXED</button>
+              </div>
             </div>
             <div className="toggles">
               <label className="toggle">
@@ -146,14 +199,23 @@ function App() {
                 <div key={i + 1}>{i + 1}</div>
               ))}
             </div>
-            <textarea
-              ref={textareaRef}
-              value={config}
-              onChange={(event) => setConfig(event.target.value)}
-              onScroll={handleScroll}
-              spellCheck={false}
-              placeholder="# YAML/JSON Config"
-            />
+            <div style={{ flex: 1, position: 'relative' }}>
+              <Editor
+                value={config}
+                onValueChange={(code) => setConfig(code)}
+                highlight={(code) => highlight(code, languages.yaml, "yaml")}
+                padding={24}
+                className="prism-editor"
+                textareaId="config-editor"
+                onScroll={handleScroll}
+                style={{
+                  fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                  fontSize: "0.9rem",
+                  minHeight: "400px",
+                  backgroundColor: "transparent",
+                }}
+              />
+            </div>
           </div>
           {error && <p className="error-message">SYSTEM_ERROR: {error}</p>}
         </section>
@@ -161,6 +223,11 @@ function App() {
         <section className="panel results">
           <div className="panel-header">
             <h2>Analysis Report</h2>
+            {issues.length > 0 && (
+              <button onClick={downloadReport} className="download-btn">
+                [⬇] EXPORT_LOGS
+              </button>
+            )}
           </div>
 
           <div className="status-bar-container">

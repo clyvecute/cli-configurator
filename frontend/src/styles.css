@@ -552,3 +552,119 @@ code {
   font-size: 0.9em;
   color: var(--accent);
 }
+
+/* --- Syntax Highlighting (Prism) --- */
+.prism-editor {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace !important;
+  font-size: 0.9rem !important;
+  line-height: 1.6 !important;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #666;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: #888;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #ff00ff;
+  /* Magenta for keys */
+  text-shadow: 0 0 2px rgba(255, 0, 255, 0.3);
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: var(--accent);
+  /* Cyan for values */
+  text-shadow: 0 0 2px var(--accent-dim);
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #f8f8f2;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #ffcc00;
+  /* Yellow */
+}
+
+.token.function,
+.token.class-name {
+  color: #ff3333;
+  /* Red */
+}
+
+.token.regex,
+.token.important,
+
+/* --- Preset Actions --- */
+.preset-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 1rem;
+  border-left: 1px solid var(--border-dim);
+  padding-left: 1rem;
+}
+
+.preset-btn {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.preset-btn:hover {
+  color: var(--accent);
+  background: rgba(0, 240, 255, 0.1);
+  border-color: var(--accent-dim);
+}
+
+.preset-btn.warning:hover {
+  color: var(--warn);
+  background: rgba(255, 204, 0, 0.1);
+  border-color: var(--warn);
+}
+
+.download-btn {
+  background: transparent;
+  border: 1px solid var(--border-dim);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.download-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}

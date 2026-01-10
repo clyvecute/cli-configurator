@@ -9,28 +9,18 @@ type Issue = {
 };
 
 const sampleConfig = `metadata:
-  name: radiant-service
+  name: core-service-01
   env: staging
 settings:
-  replicas: 2
+  replicas: 4
   timeout: 50
 features:
-  - name: shimmering-ui
+  - name: sys-admin-v2
     enabled: true
-  - name: dark-mode
+  - name: legacy-mode
     enabled: false`;
 
-const severityBadge: Record<Issue["severity"], string> = {
-  error: "badge-error",
-  warn: "badge-warn",
-};
-
 const API_BASE = import.meta.env.VITE_LINTER_API ?? "http://localhost:8080";
-
-const issueHeaders: Record<Issue["severity"], string> = {
-  error: "Critical",
-  warn: "Warning",
-};
 
 function App() {
   const [config, setConfig] = useState(sampleConfig);
@@ -94,26 +84,24 @@ function App() {
 
   return (
     <div className="app-shell">
-      <div className="blurred-light" />
       <header className="hero">
         <div>
-          <p className="eyebrow">Config Assurance Suite</p>
-          <h1>Config Sentinel</h1>
+          <span className="eyebrow">System // Config_Linter</span>
+          <h1>Sentinel</h1>
           <p className="lead">
-            Upload YAML/JSON configuration, surface line-aware issues, and ship stable
-            deployments faster.
+            Static analysis for infrastructure configuration.
+            Ensure deployment stability.
           </p>
         </div>
         <div className="api-card">
-          <p className="label">API Key</p>
+          <span className="label">Access Key</span>
           <input
-            className="input-field"
             type="password"
             value={apiKey}
             onChange={(event) => setApiKey(event.target.value)}
-            placeholder="Paste your Config Sentinel API key"
+            placeholder="ENTER API KEY"
+            autoComplete="off"
           />
-          <small>Stored only in this browser for convenience.</small>
         </div>
       </header>
 
@@ -121,13 +109,12 @@ function App() {
         <section className="panel editor">
           <div className="panel-header">
             <div>
-              <h2>Config source</h2>
-              <p>Supports YAML or JSON. Strict mode makes warnings fatal.</p>
+              <h2>Input Source</h2>
             </div>
             <div className="toggles">
               <label className="toggle">
                 <input type="checkbox" checked={strict} onChange={() => setStrict(!strict)} />
-                <span>Strict</span>
+                <span>STRICT_MODE</span>
               </label>
               <label className="toggle">
                 <input
@@ -135,30 +122,33 @@ function App() {
                   checked={fixSuggestions}
                   onChange={() => setFixSuggestions(!fixSuggestions)}
                 />
-                <span>Fix hints</span>
+                <span>AUTO_SUGGEST</span>
               </label>
               <button className="cta" onClick={runLint} disabled={loading}>
-                {loading ? "Linting…" : "Lint config"}
+                {loading ? "PROCESSING..." : "EXECUTE_LINT"}
               </button>
             </div>
           </div>
-          <textarea value={config} onChange={(event) => setConfig(event.target.value)} />
-          {error && <p className="error-message">{error}</p>}
+          <div className="editor-content">
+            <textarea
+              value={config}
+              onChange={(event) => setConfig(event.target.value)}
+              spellCheck={false}
+            />
+          </div>
+          {error && <p className="error-message">SYSTEM_ERROR: {error}</p>}
         </section>
 
         <section className="panel results">
           <div className="panel-header">
-            <h2>Verdict</h2>
-            <p>
-              Issues detected: <strong>{issues.length}</strong>
-            </p>
+            <h2>Analysis Report</h2>
           </div>
           <div className="summary-row">
             <div className="summary-pill">
-              <span>Errors</span>
+              <span>Critical Errors</span>
               <strong>{summary.error || 0}</strong>
             </div>
-            <div className="summary-pill warn">
+            <div className="summary-pill">
               <span>Warnings</span>
               <strong>{summary.warn || 0}</strong>
             </div>
@@ -166,18 +156,22 @@ function App() {
           <div className="issue-grid">
             {issues.length === 0 && (
               <div className="empty-state">
-                Config looks solid. Use the strict toggle to gate warnings.
+                NO ISSUES DETECTED. SYSTEM NOMINAL.
               </div>
             )}
-            {issues.map((issue) => (
-              <article key={`${issue.line}-${issue.message}`} className="issue-card">
-                <div className={`badge ${severityBadge[issue.severity]}`}>
-                  <p>{issueHeaders[issue.severity]}</p>
-                  <small>line {issue.line}</small>
+            {issues.map((issue, idx) => (
+              <article
+                key={`${issue.line}-${idx}`}
+                className="issue-card"
+                data-severity={issue.severity}
+              >
+                <div className="badge">
+                  <span>{issue.severity.toUpperCase()}</span>
+                  <span>LN:{issue.line}</span>
                 </div>
                 <p className="issue-message">{issue.message}</p>
                 {fixSuggestions && issue.suggestedFix && (
-                  <p className="fix">Fix: {issue.suggestedFix}</p>
+                  <p className="fix">{issue.suggestedFix}</p>
                 )}
               </article>
             ))}
@@ -186,28 +180,27 @@ function App() {
 
         <section className="panel docs">
           <div className="panel-header">
-            <h2>Documentation & Workflow</h2>
-            <p>Built for CI, design ops, and product teams.</p>
+            <h2>System Documentation</h2>
           </div>
           <ul>
-            <li>Run the CLI locally or via the API for automation and pre-commit hooks.</li>
-            <li>Strict mode fails the build on any warning when toggled.</li>
-            <li>Fix suggestions help writers correct configs quickly.</li>
-            <li>Copy the JSON output or hook the API into GitHub Actions.</li>
+            <li>CLI: Run locally for pre-commit validation loops.</li>
+            <li>STRICT: Halts build pipelines on any warning signal.</li>
+            <li>API: Integrate with external CI/CD monitoring tools.</li>
           </ul>
           <div className="doc-grid">
             <article>
-              <h3>API contract</h3>
+              <h3>Endpoint // Lint</h3>
               <p>
-                POST /lint with <code>{`{config, strict, fixSuggestions}`}</code> and send
-                the API key via <code>X-API-Key</code> or a Bearer token.
+                POST /lint <code>{`{config, strict, fixSuggestions}`}</code>
+                <br />
+                Auth: <code>X-API-Key</code> or Bearer Token.
               </p>
             </article>
             <article>
-              <h3>Frontend guidance</h3>
+              <h3>Usage Guide</h3>
               <p>
-                Build custom dashboards, compare configs, integrate VS Code policies, or
-                pipe results to Slack / email alerts.
+                Paste YAML/JSON configuration to validate schema compliance.
+                Use generated report to patch infrastructure definitions.
               </p>
             </article>
           </div>

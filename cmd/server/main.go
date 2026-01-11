@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -73,6 +74,14 @@ type HealthResponse struct {
 
 type ErrorResponse struct {
 	Error string `json:"error"`
+}
+
+type FetchRequest struct {
+	URL string `json:"url"`
+}
+
+type FetchResponse struct {
+	Content string `json:"content"`
 }
 
 // -- Main --
@@ -148,6 +157,64 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 		Uptime:  time.Since(startTime).String(),
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+func handleFetch(w http.ResponseWriter, r *http.Request) {
+	var req FetchRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Invalid JSON"})
+		return
+	}
+
+	if req.URL == "" {
+		writeJSON(w, http.StatusBadRequest, ErrorResponse{Error: "URL is required"})
+		return
+	}
+
+	// Security: Basic check to prevent SSRF to local network (simple check)
+	lower := strings.ToLower(req.URL)
+	if strings.Contains(lower, "localhost") || strings.Contains(lower, "127.0.0.1") || strings.Contains(lower, "192.168.") {
+		writeJSON(w, http.StatusForbidden, ErrorResponse{Error: "Internal network access forbidden"})
+		return
+	}
+	
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(req.URL)
+	if err != nil {
+		slog.Error("fetch_failed", "url", req.URL, "error", err)
+		writeJSON(w, http.StatusBadGateway, ErrorResponse{Error: "Failed to fetch URL"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		writeJSON(w, http.StatusBadGateway, ErrorResponse{Error: fmt.Sprintf("Upstream returned %d", resp.StatusCode)})
+		return
+	}
+
+	// Limit size to 1MB
+	// safe read
+	const MaxSize = 1024 * 1024
+	body := make([]byte, 0, MaxSize)
+	buf := make([]byte, 1024)
+	total := 0
+	
+	for {
+		n, err := resp.Body.Read(buf)
+		if n > 0 {
+			total += n
+			if total > MaxSize {
+				writeJSON(w, http.StatusRequestEntityTooLarge, ErrorResponse{Error: "File too large (max 1MB)"})
+				return
+			}
+			body = append(body, buf[:n]...)
+		}
+		if err != nil {
+			break
+		}
+	}
+
+	writeJSON(w, http.StatusOK, FetchResponse{Content: string(body)})
 }
 
 func handleLint(w http.ResponseWriter, r *http.Request) {

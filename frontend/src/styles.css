@@ -668,3 +668,64 @@ code {
   background: var(--accent-dim);
   border-color: var(--accent);
 }
+
+/* --- Builder Interface --- */
+.active-tab {
+  color: var(--bg-root);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: bold;
+}
+
+.active-tab:hover {
+  color: var(--bg-root);
+  background: var(--accent);
+  opacity: 0.9;
+}
+
+.builder-form {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: var(--bg-root);
+  min-height: 400px;
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.form-group input,
+.form-group select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  color: var(--text-primary);
+  padding: 0.75rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}

@@ -12,20 +12,60 @@
 
 ---
 
-## Key Features
+## 🎯 Mission: Why Sentinel Exists?
 
-- **Dual-Mode Architecture**: Runs as a standalone CLI tool or a containerized Full-Stack Web App.
-- **Visual Dashboard**: A modern terminal-inspired interface with:
-  - **Syntax Highlighting** (PrismJS) for YAML/JSON.
-  - **Real-time Health Visualizers** & Status Indicators.
-  - **Quick-Load Presets** (Clean/Broken/Mixed) for rapid testing.
-- **Smart Validation**: Detects schema violations, type mismatches, and business logic errors.
-- **Reporting**: One-click **JSON Audit Exports** for compliance and ticketing.
-- **Docker Native**: Builds into a single lightweight binary + static asset container.
+In modern microservice architectures, **configuration drift** is a silent killer. A typo in a YAML file or an invalid environment variable can bring down production systems, yet these errors are often invisible to standard syntax checkers.
+
+Sentinel bridges this gap by enforcing **Semantic Configuration Integrity**. It doesn't just check if your YAML is valid; it checks if your *infrastructure logic* is sound (e.g., "Are replicas > 0?", "Is this environment allowed?"). 
+
+**It transforms configuration from a text file into a type-safe contract.**
 
 ---
 
-## Quick Start (Docker)
+## ✨ Features & Architecture
+
+### 1. Robust CLI Engine (`cmd/cli`)
+Built for the pipeline.
+- **Argument Parsing**: Standard Go `flag` package for POSIX-compliant flags (`-strict`, `-fix-suggestions`).
+- **Exit Codes**: 
+  - `0`: Success (No issues)
+  - `1`: System Error (IO/permissions)
+  - `2`: Validation Failure (Blocks CI pipelines)
+- **Unix Philosophy**: Silent on success, loud on error. pipes friendly.
+
+### 2. The Core Linter (`linter/`)
+The shared brain of the operation.
+- **Custom State Machine**: Instead of generic parsing, Sentinel reads the config stream to provide line-accurate error reporting.
+- **Business Logic Validation**: distinct `error` vs `warning` severity levels.
+
+### 3. Cybernetic Dashboard (`cmd/server` + `frontend/`)
+When the CLI says "Error", the Dashboard shows **"Where"**.
+- **Visual Feedback**: Real-time status visualizers.
+- **Builder Mode**: A Form-based UI to generate valid-by-construction configs.
+- **GitOps Ready**: Import and validate raw config URLs directly.
+
+---
+
+## 🛠️ Quick Start
+
+### 1. Validate a Config
+Create a file named `config.yaml` (see [`config.example.yaml`](./config.example.yaml) for a reference).
+
+```bash
+# Install
+go install ./cmd/cli
+
+# Run
+cli-config-linter -strict config.yaml
+```
+
+### 2. Run the Dashboard
+(See Docker instructions below for production run)
+
+---
+
+## 🐳 Docker Usage
+
 
 The fastest way to run Sentinel is via Docker. This spins up the API and the UI instantly.
 

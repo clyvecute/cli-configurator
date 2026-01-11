@@ -49,7 +49,10 @@ features:
 
 const API_BASE = import.meta.env.VITE_LINTER_API ?? "http://localhost:8080";
 
+type ViewMode = "editor" | "builder" | "import";
+
 function App() {
+  const [viewMode, setViewMode] = useState<ViewMode>("editor");
   const [config, setConfig] = useState(presets.clean);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [strict, setStrict] = useState(true);
@@ -57,6 +60,20 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [apiKey, setApiKey] = useState("");
+
+  // Builder State
+  const [builderState, setBuilderState] = useState({
+    name: "service-01",
+    env: "dev",
+    replicas: 1,
+    timeout: 30,
+    feature1: true,
+    feature2: false
+  });
+
+  // Import State
+  const [importUrl, setImportUrl] = useState("");
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
 
@@ -70,6 +87,49 @@ function App() {
   useEffect(() => {
     localStorage.setItem("cli-linter-api-key", apiKey);
   }, [apiKey]);
+
+  const generateConfigFromBuilder = () => {
+    const yaml = `metadata:
+  name: ${builderState.name}
+  env: ${builderState.env}
+settings:
+  replicas: ${builderState.replicas}
+  timeout: ${builderState.timeout}
+features:
+  - name: feature-a
+    enabled: ${builderState.feature1}
+  - name: feature-b
+    enabled: ${builderState.feature2}`;
+    setConfig(yaml);
+    setViewMode("editor");
+  };
+
+  const fetchUrl = async () => {
+    if (!importUrl) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${API_BASE}/fetch`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": apiKey,
+        },
+        body: JSON.stringify({ url: importUrl }),
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.error || "Fetch failed");
+      }
+      const data = await res.json();
+      setConfig(data.content);
+      setViewMode("editor");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const runLint = async () => {
     setLoading(true);
@@ -129,11 +189,7 @@ function App() {
 
   const lineCount = useMemo(() => config.split("\n").length, [config]);
 
-  // Sync scrolling between textarea and line numbers
   const handleScroll = (e: React.UIEvent<HTMLTextAreaElement> | React.UIEvent<HTMLDivElement>) => {
-    // The editor component might fire scroll events from different elements, 
-    // but the textarea inside it is what we care about for scrollTop
-    // If it's the custom editor, the target is the textarea.
     const target = e.target as HTMLElement;
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = target.scrollTop;
@@ -163,59 +219,107 @@ function App() {
         </div>
       </header>
 
-      <main className="main-grid">
+      <div className="main-grid">
         <section className="panel editor">
           <div className="panel-header">
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <h2>Input Source</h2>
               <div className="preset-actions">
-                <span className="label">LOAD:</span>
-                <button onClick={() => setConfig(presets.clean)} className="preset-btn">CLEAN</button>
-                <button onClick={() => setConfig(presets.broken)} className="preset-btn warning">BROKEN</button>
-                <button onClick={() => setConfig(presets.mixed)} className="preset-btn">MIXED</button>
+                <button onClick={() => setViewMode("editor")} className={`preset-btn ${viewMode === "editor" ? "active-tab" : ""}`}>EDITOR</button>
+                <button onClick={() => setViewMode("builder")} className={`preset-btn ${viewMode === "builder" ? "active-tab" : ""}`}>BUILDER</button>
+                <button onClick={() => setViewMode("import")} className={`preset-btn ${viewMode === "import" ? "active-tab" : ""}`}>IMPORT</button>
               </div>
             </div>
-            <div className="toggles">
-              <label className="toggle">
-                <input type="checkbox" checked={strict} onChange={() => setStrict(!strict)} />
-                <span>STRICT_MODE</span>
-              </label>
-              <label className="toggle">
-                <input
-                  type="checkbox"
-                  checked={fixSuggestions}
-                  onChange={() => setFixSuggestions(!fixSuggestions)}
-                />
-                <span>AUTO_SUGGEST</span>
-              </label>
-              <button className="cta" onClick={runLint} disabled={loading}>
-                {loading ? "PROCESSING..." : "EXECUTE_LINT"}
-              </button>
-            </div>
+            {viewMode === "editor" && (
+              <div className="toggles">
+                <label className="toggle">
+                  <input type="checkbox" checked={strict} onChange={() => setStrict(!strict)} />
+                  <span>STRICT_MODE</span>
+                </label>
+                <button className="cta" onClick={runLint} disabled={loading}>
+                  {loading ? "PROCESSING..." : "EXECUTE_LINT"}
+                </button>
+              </div>
+            )}
           </div>
-          <div className="editor-content">
-            <div className="line-numbers" ref={lineNumbersRef}>
-              {Array.from({ length: Math.max(lineCount, 15) }, (_, i) => (
-                <div key={i + 1}>{i + 1}</div>
-              ))}
-            </div>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <Editor
-                value={config}
-                onValueChange={(code) => setConfig(code)}
-                highlight={(code) => highlight(code, languages.yaml, "yaml")}
-                padding={24}
-                className="prism-editor"
-                textareaId="config-editor"
-                onScroll={handleScroll}
-                style={{
-                  fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-                  fontSize: "0.9rem",
-                  minHeight: "400px",
-                  backgroundColor: "transparent",
-                }}
-              />
-            </div>
+
+          <div className="editor-content-wrapper" style={{ height: '500px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            {viewMode === "editor" && (
+              <div className="editor-content">
+                <div className="line-numbers" ref={lineNumbersRef}>
+                  {Array.from({ length: Math.max(lineCount, 15) }, (_, i) => (
+                    <div key={i + 1}>{i + 1}</div>
+                  ))}
+                </div>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <Editor
+                    value={config}
+                    onValueChange={(code) => setConfig(code)}
+                    highlight={(code) => highlight(code, languages.yaml, "yaml")}
+                    padding={24}
+                    className="prism-editor"
+                    textareaId="config-editor"
+                    onScroll={handleScroll}
+                    style={{
+                      fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                      fontSize: "0.9rem",
+                      minHeight: "100%",
+                      backgroundColor: "transparent",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {viewMode === "builder" && (
+              <div className="builder-form">
+                <div className="form-group">
+                  <label>Service Name</label>
+                  <input type="text" value={builderState.name} onChange={e => setBuilderState({ ...builderState, name: e.target.value })} />
+                </div>
+                <div className="form-group">
+                  <label>Environment</label>
+                  <select value={builderState.env} onChange={e => setBuilderState({ ...builderState, env: e.target.value })}>
+                    <option value="dev">Dev</option>
+                    <option value="staging">Staging</option>
+                    <option value="prod">Prod</option>
+                  </select>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Replicas</label>
+                    <input type="number" value={builderState.replicas} onChange={e => setBuilderState({ ...builderState, replicas: parseInt(e.target.value) })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Timeout (s)</label>
+                    <input type="number" value={builderState.timeout} onChange={e => setBuilderState({ ...builderState, timeout: parseInt(e.target.value) })} />
+                  </div>
+                </div>
+                <div className="api-card" style={{ marginTop: 'auto' }}>
+                  <button className="cta" onClick={generateConfigFromBuilder}>GENERATE CONFIG</button>
+                </div>
+              </div>
+            )}
+
+            {viewMode === "import" && (
+              <div className="builder-form">
+                <p className="lead">Load configuration from raw remote URL (GitHub Raw, Gist, etc).</p>
+                <div className="form-group">
+                  <label>Source URL</label>
+                  <input
+                    type="text"
+                    placeholder="https://raw.githubusercontent.com/..."
+                    value={importUrl}
+                    onChange={e => setImportUrl(e.target.value)}
+                  />
+                </div>
+                <div className="api-card">
+                  <button className="cta" onClick={fetchUrl} disabled={loading}>
+                    {loading ? "FETCHING..." : "FETCH SOURCE"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           {error && <p className="error-message">SYSTEM_ERROR: {error}</p>}
         </section>
@@ -229,7 +333,7 @@ function App() {
               </button>
             )}
           </div>
-
+          {/* ... keeping existing results section ... */}
           <div className="status-bar-container">
             <span className="status-label">SYS_STATUS</span>
             <div className="status-bar">
@@ -238,10 +342,7 @@ function App() {
                 if (summary.error && i < 20) statusClass = "critical";
                 else if (summary.warn && i < 20) statusClass = "warning";
                 else if (issues.length === 0) statusClass = "active";
-
-                // Add some randomness to "active" state or specific patterns
                 if (issues.length === 0 && Math.random() > 0.8) statusClass = "";
-
                 return <div key={i} className={`segment ${statusClass}`} />;
               })}
             </div>
@@ -286,6 +387,7 @@ function App() {
         </section>
 
         <section className="panel docs">
+          {/* ... keeping existing docs section ... */}
           <div className="panel-header">
             <h2>System Documentation</h2>
           </div>
@@ -304,15 +406,16 @@ function App() {
               </p>
             </article>
             <article>
-              <h3>Usage Guide</h3>
+              <h3>Endpoint // Fetch</h3>
               <p>
-                Paste YAML/JSON configuration to validate schema compliance.
-                Use generated report to patch infrastructure definitions.
+                POST /fetch <code>{`{url}`}</code>
+                <br />
+                Load remote config securely.
               </p>
             </article>
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }

@@ -103,7 +103,10 @@ func main() {
 	// 2b. Private Endpoints (Secured)
 	// We handle auth manually in the chain for granular control
 	secured := withAPIKeyAuth(cfg.APIKeys, http.HandlerFunc(handleLint))
+	fetchSecured := withAPIKeyAuth(cfg.APIKeys, http.HandlerFunc(handleFetch))
+	
 	mux.Handle("POST /lint", secured)
+	mux.Handle("POST /fetch", fetchSecured)
 
 	// 2c. Static Assets
 	if info, err := os.Stat(cfg.StaticDir); err == nil && info.IsDir() {

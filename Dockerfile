@@ -13,7 +13,7 @@ COPY go.mod ./
 # If go.sum existed, we'd copy it here: COPY go.sum ./
 COPY . .
 # Build statically linked binary
-RUN CGO_ENABLED=0 GOOS=linux go build -o /server-bin ./server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /server-bin ./cmd/server
 
 # Final Runtime Image
 FROM alpine:latest

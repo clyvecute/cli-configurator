@@ -1,31 +1,31 @@
-# 🛡️ Sentinel // Config Linter
+# Sentinel: Infrastructure Configuration Linter
 
 > **Infrastructure assurance suite for the modern stack.**  
 > *Validate, Analyze, and Secure your configuration files with precision.*
 
-![License](https://img.shields.io/badge/license-MIT-cyan?style=flat-square)
-![Go](https://img.shields.io/badge/go-1.22-cyan?style=flat-square)
-![React](https://img.shields.io/badge/react-18-cyan?style=flat-square)
-![Docker](https://img.shields.io/badge/docker-ready-cyan?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-0099cc?style=flat-square)
+![Go](https://img.shields.io/badge/go-1.22-00add8?style=flat-square)
+![React](https://img.shields.io/badge/react-18-61dafb?style=flat-square)
+![Docker](https://img.shields.io/badge/docker-ready-2496ed?style=flat-square)
 
-**Sentinel** is a dual-interface validation tool designed to catch configuration drift before it hits production. It combines a high-performance **Go CLI** for CI/CD pipelines with a **Cybernetic Dashboard** for visual debugging and reporting.
+**Sentinel** is a dual-interface validation tool designed to catch configuration drift before it hits production. It combines a high-performance **Go CLI** for CI/CD pipelines with a **High-fidelity Dashboard** for visual debugging and reporting.
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-- **🚀 Dual-Mode Architecture**: Runs as a standalone CLI tool or a containerized Full-Stack Web App.
-- **👁️ Visual Dashboard**: A "Sci-Fi" terminal interface with:
+- **Dual-Mode Architecture**: Runs as a standalone CLI tool or a containerized Full-Stack Web App.
+- **Visual Dashboard**: A modern terminal-inspired interface with:
   - **Syntax Highlighting** (PrismJS) for YAML/JSON.
-  - **Real-time Health Visualizers** & Glitch Effects.
+  - **Real-time Health Visualizers** & Status Indicators.
   - **Quick-Load Presets** (Clean/Broken/Mixed) for rapid testing.
-- **🔧 Smart Validation**: Detects schema violations, type mismatches, and business logic errors.
-- **📄 Reporting**: One-click **JSON Audit Exports** for compliance and ticketing.
-- **🐳 Docker Native**: Builds into a single lightweight binary + static asset container.
+- **Smart Validation**: Detects schema violations, type mismatches, and business logic errors.
+- **Reporting**: One-click **JSON Audit Exports** for compliance and ticketing.
+- **Docker Native**: Builds into a single lightweight binary + static asset container.
 
 ---
 
-## 🛠️ Quick Start (Docker)
+## Quick Start (Docker)
 
 The fastest way to run Sentinel is via Docker. This spins up the API and the UI instantly.
 
@@ -38,12 +38,12 @@ docker build -t sentinel .
 docker run -p 8080:8080 -e CONFIG_LINTER_API_KEY=admin-key-123 sentinel
 ```
 
-OPEN: `http://localhost:8080`  
-KEY: `admin-key-123`
+**OPEN**: `http://localhost:8080`  
+**KEY**: `admin-key-123`
 
 ---
 
-## 💻 Local Development
+## Local Development
 
 ### 1. Backend (Go)
 Runs the API server which handles validation logic.
@@ -52,11 +52,11 @@ Runs the API server which handles validation logic.
 # Run the server
 export CONFIG_LINTER_API_KEY=my-secret-key
 export STATIC_DIR=./frontend/dist # Point to frontend assets
-go run ./server
+go run ./cmd/server
 ```
 
 ### 2. Frontend (React + Vite)
-Runs the Cybernetic Dashboard.
+Runs the Dashboard UI.
 
 ```bash
 cd frontend
@@ -67,13 +67,13 @@ npm run dev
 
 ---
 
-## 📟 CLI Usage
+## CLI Usage
 
 For integration into **GitHub Actions** or **Pre-commit hooks**, use the CLI mode.
 
 ```bash
 # Install
-go install ./...
+go install ./cmd/...
 
 # Run validation
 cli-config-linter -strict -fix-suggestions config.yaml
@@ -87,7 +87,7 @@ config.yaml:12 [error] settings.replicas must be a positive integer
 
 ---
 
-## 📐 Configuration Schema
+## Configuration Schema
 
 Sentinel validates against this strict schema:
 
@@ -101,7 +101,50 @@ Sentinel validates against this strict schema:
 
 ---
 
-## 📸 Portfolio Notes
+## API Reference
+
+The Sentinel Server exposes a RESTful API for external integrations.
+
+### `GET /health`
+**Description**: Checks system status and uptime.  
+**Auth**: Public  
+**Response**:
+```json
+{
+  "status": "ok",
+  "version": "1.0.0",
+  "uptime": "1h 23m 45s"
+}
+```
+
+### `POST /lint`
+**Description**: Validates a configuration snippet.  
+**Auth**: Required (`X-API-Key` header or `Authorization: Bearer <token>`)  
+**Body**:
+```json
+{
+  "config": "metadata: ...", // The raw config string
+  "strict": true,            // Fail on warnings?
+  "fixSuggestions": true     // Include fix tips?
+}
+```
+**Response**:
+```json
+{
+  "issues": [
+    {
+      "line": 4,
+      "severity": "error",
+      "message": "settings.replicas must be positive"
+    }
+  ],
+  "fatal": true
+}
+```
+
+---
+
+## Portfolio Notes
 
 This project demonstrates:
 - **Full Stack Engineering**: Go (Backend), React/TypeScript (Frontend).

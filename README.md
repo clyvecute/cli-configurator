@@ -12,7 +12,7 @@
 
 ---
 
-## 🎯 Mission: Why Sentinel Exists?
+##  Mission: Why Sentinel Exists?
 
 In modern microservice architectures, **configuration drift** is a silent killer. A typo in a YAML file or an invalid environment variable can bring down production systems, yet these errors are often invisible to standard syntax checkers.
 
@@ -22,7 +22,7 @@ Sentinel bridges this gap by enforcing **Semantic Configuration Integrity**. It 
 
 ---
 
-## ✨ Features & Architecture
+##  Features & Architecture
 
 ### 1. Robust CLI Engine (`cmd/cli`)
 Built for the pipeline.
@@ -46,7 +46,7 @@ When the CLI says "Error", the Dashboard shows **"Where"**.
 
 ---
 
-## 🛠️ Quick Start
+##  Quick Start
 
 ### 1. Validate a Config
 Create a file named `config.yaml` (see [`config.example.yaml`](./config.example.yaml) for a reference).
@@ -64,7 +64,7 @@ cli-config-linter -strict config.yaml
 
 ---
 
-## 🐳 Docker Usage
+##  Docker Usage
 
 
 The fastest way to run Sentinel is via Docker. This spins up the API and the UI instantly.

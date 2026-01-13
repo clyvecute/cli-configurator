@@ -47,7 +47,7 @@ features:
     enabled: true`
 };
 
-const API_BASE = import.meta.env.VITE_LINTER_API ?? "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_LINTER_API ?? (import.meta.env.DEV ? "http://localhost:8080" : "");
 
 type ViewMode = "editor" | "builder" | "import";
 

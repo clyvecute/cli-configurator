@@ -288,11 +288,25 @@ features:
                 <div className="form-row">
                   <div className="form-group">
                     <label>Replicas</label>
-                    <input type="number" value={builderState.replicas} onChange={e => setBuilderState({ ...builderState, replicas: parseInt(e.target.value) })} />
+                    <input
+                      type="number"
+                      value={isNaN(builderState.replicas) ? "" : builderState.replicas}
+                      onChange={e => {
+                        const val = parseInt(e.target.value);
+                        setBuilderState({ ...builderState, replicas: isNaN(val) ? 0 : val });
+                      }}
+                    />
                   </div>
                   <div className="form-group">
                     <label>Timeout (s)</label>
-                    <input type="number" value={builderState.timeout} onChange={e => setBuilderState({ ...builderState, timeout: parseInt(e.target.value) })} />
+                    <input
+                      type="number"
+                      value={isNaN(builderState.timeout) ? "" : builderState.timeout}
+                      onChange={e => {
+                        const val = parseInt(e.target.value);
+                        setBuilderState({ ...builderState, timeout: isNaN(val) ? 0 : val });
+                      }}
+                    />
                   </div>
                 </div>
                 <div className="api-card" style={{ marginTop: 'auto' }}>

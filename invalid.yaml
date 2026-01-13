@@ -1,0 +1,8 @@
+metadata:
+  name: test-app
+  env: invalid-env
+settings:
+  replicas: -1
+features:
+  - name: feature-1
+    enabled: true

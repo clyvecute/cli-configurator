@@ -1,0 +1,11 @@
+metadata:
+  name: sentinel-prod
+  env: dev
+settings:
+  replicas: 5
+  timeout: 30
+features:
+  - name: feature-a
+    enabled: true
+  - name: feature-b
+    enabled: false

@@ -1,0 +1,11 @@
+metadata:
+  name: payment-service-v1
+  env: prod
+settings:
+  replicas: 4
+  timeout: 120
+features:
+  - name: dark-mode
+    enabled: true
+  - name: legacy-api
+    enabled: false
